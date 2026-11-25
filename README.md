@@ -17,7 +17,9 @@ sudo nixos-rebuild switch --flake ~/awfixeros#laptop
 scripts/update-pins.py
 ```
 
-The script finds every `packages/<name>/default.nix` and every `flake.nix`. It moves GitHub release, npm, redirect, and `latest.json` pins to the newest matching release, refreshes hashes, then builds those packages and each NixOS configuration. Adding a package or a flake input does not require editing the script.
+The script finds every `packages/<name>/default.nix` and every `flake.nix`. It moves GitHub release, npm, redirect, `latest.json`, and apt-index pins to the newest matching release, refreshes hashes, then builds those packages and each NixOS configuration. Adding a package or a flake input does not require editing the script.
+
+An apt pin is a comment `# update: apt <Packages URL>` above `version`. The index stanza is `Package: 1password` unless the comment adds a second word (`# update: apt <url> <package>`). A `~` in the Debian version is written as `-` so it matches the upstream tarball name. `packages/1password` tracks the Linux beta channel this way, including the bundled `1password-mcp`.
 
 A pin stays where it is when a comment above it says `# update: skip`, when a flake URL contains a 40-character commit, or when the input tracks a branch. Branch inputs such as `nixpkgs` move only with `scripts/update-pins.py --inputs`. `mangowm` is marked skip because the compositor in use is the local patch in `packages/mango`.
 
@@ -76,6 +78,7 @@ nix build .#kraken-desktop
 | `t3-code` | T3 Code editor |
 | `grok-bot` | Grok Bot |
 | `omnidiff` | Content-aware diff, used as `git diff` |
+| `onepassword-beta` | 1Password Linux beta, including `1password-mcp` |
 | `open-design-daemon` / `open-design-web` | From the pinned open-design flake input |
 | `playwright-test`, `playwright-browsers`, `playwright-driver`, `prisma`, `prisma-engines` | System Playwright/Prisma binaries reused outside the OS config |
 

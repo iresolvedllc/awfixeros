@@ -136,6 +136,9 @@
           spotifast = pkgs.callPackage ./packages/spotifast { };
           penguin-mail = pkgs.callPackage ./packages/penguin-mail { };
           omnidiff = pkgs.callPackage ./packages/omnidiff { };
+          onepassword-beta = pkgs.callPackage ./packages/1password {
+            _1password-gui = pkgs._1password-gui;
+          };
           open-design-daemon = open-design.packages.${system}.daemon;
           open-design-web = open-design.packages.${system}.web;
 

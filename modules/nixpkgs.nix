@@ -32,6 +32,12 @@
       spotifast = final.callPackage ../packages/spotifast { };
       penguin-mail = final.callPackage ../packages/penguin-mail { };
       omnidiff = final.callPackage ../packages/omnidiff { };
+      # Beta desktop app + bundled 1password-mcp. prev, not final, or this
+      # overlay recurses through the replacement below.
+      onepassword-beta = final.callPackage ../packages/1password {
+        _1password-gui = prev._1password-gui;
+      };
+      _1password-gui = final.onepassword-beta;
     })
   ];
 

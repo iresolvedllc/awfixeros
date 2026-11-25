@@ -32,6 +32,7 @@
   # Toolchains live in programming.nix. Scanners and packet tools live in hacking.nix.
   environment.systemPackages = with pkgs; [
     vesktop
+    signal-desktop
     telegram-desktop
     ffmpeg
     mediainfo

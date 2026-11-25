@@ -7,8 +7,12 @@ Discovery, not a package list:
 - every flake.nix in the repo
 
 A new package is picked up when its default.nix fetches a GitHub release,
-an npm tarball, a redirect URL, or a latest.json named in a comment. A new
-flake input is picked up from flake.nix. Nothing in this script names them.
+an npm tarball, a redirect URL, a latest.json named in a comment, or an apt
+index named in a comment (`# update: apt <Packages URL>`). The apt stanza
+defaults to Package: 1password; a second word selects another stanza
+(`# update: apt <url> <package>`). Debian '~' in the version is written as
+'-' so it matches the upstream tarball name. A new flake input is picked up
+from flake.nix. Nothing in this script names a derivation.
 
 Pins that stay put:
 
@@ -25,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import gzip
 import json
 import re
 import subprocess
@@ -415,9 +420,63 @@ def binding_for(bindings: list[dict], line_index: int) -> dict | None:
 def file_directives(text: str) -> dict[str, str]:
     found = {}
     for kind, arg in DIRECTIVE.findall(text):
-        if kind in {"redirect", "json"} and arg:
+        if kind in {"redirect", "json", "apt"} and arg:
             found[kind] = arg
     return found
+
+
+def http_bytes(url: str) -> bytes:
+    request = urllib.request.Request(url, headers={"User-Agent": "awfixeros-update"})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        return response.read()
+
+
+def read_apt_index(url: str) -> str:
+    urls = [url] if url.endswith(".gz") else [url, url + ".gz"]
+    last = None
+    data = None
+    for candidate in urls:
+        try:
+            data = http_bytes(candidate)
+            break
+        except Exception as exc:
+            last = exc
+            data = None
+    if data is None:
+        raise RuntimeError(last)
+    if data[:2] == b"\x1f\x8b":
+        data = gzip.decompress(data)
+    return data.decode()
+
+
+def apt_package_version(text: str, package: str) -> str | None:
+    """Version of one Debian stanza. '~' becomes '-' to match tarball names."""
+    current = None
+    version = None
+    for raw in text.splitlines():
+        line = raw.strip()
+        if line.startswith("Package:"):
+            if current == package and version:
+                return version
+            current = line.split(":", 1)[1].strip()
+            version = None
+            continue
+        if current != package or not line.startswith("Version:"):
+            continue
+        version = line.split(":", 1)[1].strip()
+        if re.match(r"\d+:", version):
+            version = version.split(":", 1)[1]
+        version = version.replace("~", "-")
+    if current == package:
+        return version
+    return None
+
+
+def apt_stanza(text: str) -> str:
+    # The package name, when present, stays on the directive line. The next
+    # line is often `version = "..."`, and \\s would swallow that newline.
+    match = re.search(r"update:\s+apt\s+\S+[ \t]+(\S+)", text)
+    return match.group(1) if match else "1password"
 
 
 def replace_quoted(text: str, old: str, new: str) -> str:
@@ -596,7 +655,31 @@ def update_package(path: Path, planner: Planner, check: bool) -> bool:
         except Exception as exc:
             planner.fail(f"{path.relative_to(planner.root)} json: {exc}")
 
-    if not changed and not seen_bindings and "redirect" not in directives and not json_url:
+    apt_url = directives.get("apt")
+    if apt_url:
+        version_match = VERSION_ASSIGN.search(text)
+        stanza = apt_stanza(original)
+        try:
+            remote = apt_package_version(read_apt_index(apt_url), stanza)
+            current = version_match.group(2) if version_match else None
+            if not remote or not current:
+                planner.fail(
+                    f"{path.relative_to(planner.root)}: apt index has no Package: {stanza}"
+                )
+            elif version_key(remote) < version_key(current):
+                planner.note(
+                    f"keep {path.relative_to(planner.root)} at {current} ({remote} would be a downgrade)"
+                )
+            elif remote == current:
+                planner.note(f"current {path.relative_to(planner.root)} {current}")
+            else:
+                planner.note(f"bump {path.relative_to(planner.root)} {current} -> {remote}")
+                text = replace_quoted(text, current, remote)
+                changed = True
+        except Exception as exc:
+            planner.fail(f"{path.relative_to(planner.root)} apt: {exc}")
+
+    if not changed and not seen_bindings and "redirect" not in directives and not json_url and not apt_url:
         planner.note(f"build-only {path.relative_to(planner.root)}")
     if not changed:
         return False
@@ -951,6 +1034,27 @@ def self_test() -> None:
         "v0.8.0",
     )
     assert classify_flake_url(parsed["nixpkgs"]["url"])[2] == "branch"
+    apt_index = """
+Package: 1password-cli
+Version: 2.44.0-beta.02
+
+Package: 1password
+Version: 1:8.12.48~24.BETA
+Filename: pool/main/1/1password/1password-8.12.48-24.BETA.amd64.deb
+
+Package: other
+Version: 9.9.9
+"""
+    assert apt_package_version(apt_index, "1password") == "8.12.48-24.BETA"
+    assert apt_package_version(apt_index, "1password-cli") == "2.44.0-beta.02"
+    assert apt_package_version(apt_index, "missing") is None
+    assert version_key("8.12.48-24.BETA") > version_key("8.12.46-26.BETA")
+    assert apt_stanza("# update: apt https://example.invalid/Packages") == "1password"
+    assert apt_stanza("# update: apt https://example.invalid/Packages 1password-cli") == "1password-cli"
+    assert (
+        apt_stanza("# update: apt https://example.invalid/Packages\nversion = \"8.12.48-24.BETA\";")
+        == "1password"
+    )
     print("self-test ok")
 
 

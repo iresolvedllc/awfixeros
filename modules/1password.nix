@@ -51,30 +51,13 @@ let
     ".var/app/com.kagi.OrionGtk/config/chromium"
   ];
 
-  # Bundled with the desktop app at share/1password/1password-mcp (Linux
-  # /opt/1Password/1password-mcp). nixpkgs patchelfs and PATH-links
-  # op-ssh-sign but not this helper, so MCP clients looking up the
-  # documented `1password-mcp` command fail after a NixOS install.
-  guiShare = "${pkgs._1password-gui}/share/1password";
-  onepasswordMcp = pkgs.runCommand "1password-mcp" {
-    nativeBuildInputs = [ pkgs.patchelf ];
-    meta = {
-      description = "1Password desktop MCP server (patchelf'd)";
-      mainProgram = "1password-mcp";
-    };
-  } ''
-    mkdir -p $out/bin
-    install -m755 ${guiShare}/1password-mcp $out/bin/1password-mcp
-    interp=$(patchelf --print-interpreter ${guiShare}/1password)
-    rpath=$(patchelf --print-rpath ${guiShare}/1password)
-    patchelf --set-interpreter "$interp" --set-rpath "$rpath" $out/bin/1password-mcp
-  '';
-
-  # Cursor/GUI clients often spawn with a stripped PATH (ENOENT on bare
-  # `1password-mcp`). On Linux, 1Password may also reject the connection when
-  # the MCP parent is a user-owned AppImage/FHS binary (BinaryPermissions).
-  # Launch through bash so the parent of the real server is a system shell,
-  # then exec the setgid security wrapper (same pattern as BrowserSupport).
+  # packages/1password patchelfs the bundled 1password-mcp and links it on
+  # $out/bin. The setgid wrapper still has to be the binary clients exec:
+  # Cursor and other GUI clients spawn with a stripped PATH, and on Linux
+  # 1Password rejects the connection when the MCP parent is a user-owned
+  # AppImage or FHS binary (BinaryPermissions). Launch through bash so the
+  # parent of the real server is a system shell, then exec the setgid
+  # wrapper (same pattern as BrowserSupport).
   # See: https://www.1password.community/developers-69/1password-mcp-on-linux-rejecting-mcp-connections-25021
   onepasswordMcpClient = pkgs.writeShellScriptBin "1password-mcp" ''
     set -euo pipefail
@@ -103,7 +86,7 @@ in
 
   # setgid trampoline for the MCP binary (mirrors 1Password-BrowserSupport).
   security.wrappers."1password-mcp-bin" = {
-    source = "${onepasswordMcp}/bin/1password-mcp";
+    source = "${config.programs._1password-gui.package}/bin/1password-mcp";
     owner = "root";
     group = "onepassword";
     setuid = false;
