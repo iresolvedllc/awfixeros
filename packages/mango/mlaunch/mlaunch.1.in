@@ -1,0 +1,59 @@
+.TH "mlaunch" "1" "2026-10-13" "mlaunch @VERSION@" "mlaunch manual"
+.SH NAME
+mlaunch \- minimal app-only launcher client for the mango Wayland compositor
+.SH SYNOPSIS
+\fBmlaunch\fR [\fIoptions\fR]
+.br
+\fBmlaunch\fR \-\-help | \-h
+.SH DESCRIPTION
+\fBmlaunch\fR connects to a running \fBmango\fR(1) compositor and opens a
+small centered layer-shell overlay with an exclusive keyboard grab. It
+searches applications only — no file or run modes:
+.IP \(bu
+desktop applications from every \fIapplications\fR dir on the XDG data path
+(Nix profile paths and the Flatpak export dirs are appended defensively)
+.IP \(bu
+AppImages found under \fI$HOME/Applications\fR (direct exec when the bit is
+set, \fBappimage-run\fR fallback otherwise)
+.IP \(bu
+running windows with no matching application, focused via foreign-toplevel
+activation; apps with live windows carry a running dot
+.PP
+Each row shows the app icon (XDG icon-theme lookup, fallback glyph), the
+name, the \fIComment\fR/\fIGenericName\fR line, and the running dot.
+Filtering is a fuzzy subsequence match over the name, description and Exec
+basename.
+.SH OPTIONS
+.TP
+\fB\-f\fR, \fB\-\-font\fR \fI<pango font>\fR
+Font description, default \fIsans 10\fR.
+.TP
+\fB\-w\fR, \fB\-\-width\fR \fI<px>\fR
+Logical overlay width, default \fI440\fR.
+.TP
+\fB\-r\fR, \fB\-\-rows\fR \fI<n>\fR
+Maximum visible rows, default \fI8\fR.
+.TP
+\fB\-o\fR, \fB\-\-output\fR \fI<name>\fR
+Show on the named output instead of the first one.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show help.
+.SH ENVIRONMENT
+.TP
+\fBMLAUNCH_FONT\fR, \fBMLAUNCH_WIDTH\fR, \fBMLAUNCH_MAX_ROWS\fR,
+\fBMLAUNCH_ICON_THEME\fR, \fBMLAUNCH_APPIMAGE_DIRS\fR, \fBMLAUNCH_OUTPUT\fR
+The same knobs as the flags above (flags win).
+.SH KEYS
+.IP \(bu
+Type to filter; \fBUp\fR/\fBDown\fR or \fBTab\fR to change selection
+.IP \(bu
+\fBEnter\fR launch the selected app
+.IP \(bu
+\fBEscape\fR close
+.IP \(bu
+\fBCtrl+W\fR delete word, \fBCtrl+U\fR clear the line
+.PP
+The mouse selects, launches and scrolls.
+.SH SEE ALSO
+\fBmango\fR(1), \fBmmsg\fR(1), \fBmangonag\fR(1)

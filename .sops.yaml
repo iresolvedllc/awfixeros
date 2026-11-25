@@ -1,0 +1,22 @@
+# sops creation rules for the awfixeros flake.
+#
+# Public age key only — never put AGE-SECRET-KEY material here. The private
+# half lives in ~/.config/sops/age/keys.txt and is backed up in 1Password
+# ("awfixeros — sops age key").
+#
+# Edit secrets with:  sops secrets/secrets.yaml
+# sops picks this file up automatically because sops walks up the tree
+# looking for .sops.yaml. Do not define a second SOPS_CONFIG elsewhere.
+
+keys:
+  # awfixeros laptop — dedicated age key (sshd is disabled, so no host keys)
+  - &awfixeros_laptop age1exeyyqvjfstlvr7mjqesmg7wlmgd2rds8q4j5dca0y7z63ga7gnqfzkrzg
+
+creation_rules:
+  # Only files under secrets/ are encryptable with this config; anything else
+  # (flake.lock, dotfiles, packages/, …) fails to find a creation rule rather
+  # than silently encrypting to a wrong key.
+  - path_regex: ^secrets/[a-zA-Z0-9._-]+\.(yaml|yml|json|env|ini)$
+    key_groups:
+      - age:
+          - *awfixeros_laptop
