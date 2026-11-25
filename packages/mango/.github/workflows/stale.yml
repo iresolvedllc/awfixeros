@@ -10,7 +10,7 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/stale@v9
+      - uses: actions/stale@v11
         with:
           # 禁用自动标记 stale（仅手动标记的 issue 会被处理）
           days-before-issue-stale: -1
