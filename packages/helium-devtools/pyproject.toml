@@ -2,7 +2,7 @@
 name = "helium-devtools"
 version = "0.1.0"
 requires-python = ">=3.13"
-dependencies = ["aiohttp", "mcp<2"]
+dependencies = ["aiohttp", "mcp<3"]
 
 [project.scripts]
 helium-devtools = "helium_devtools.__main__:main"
