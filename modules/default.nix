@@ -7,6 +7,8 @@
     ./hacking.nix
     ./programming.nix
     ./firewall.nix
+    ./security.nix
+    ./privacy.nix
     ./flatpak.nix
     ./mango.nix
     ./nixld.nix

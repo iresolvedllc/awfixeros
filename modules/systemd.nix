@@ -64,9 +64,9 @@
   services.gnome.localsearch.enable = false;
   services.gnome.tinysparql.enable = false;
 
-  # No printers / firmware-update daemon on this laptop. mDNS/avahi is off.
+  # No printers on this laptop. mDNS/avahi is off.
+  # Firmware updates are enabled in security.nix.
   services.printing.enable = false;
-  services.fwupd.enable = false;
   services.colord.enable = false;
   services.sysprof.enable = false;
   services.tlp.enable = false;
@@ -96,10 +96,10 @@
 
   services.journald = {
     settings.Journal = {
-      SystemMaxUse = "50M";
-      RuntimeMaxUse = "32M";
-      MaxRetentionSec = "3day";
-      MaxFileSec = "1day";
+      SystemMaxUse = "200M";
+      RuntimeMaxUse = "64M";
+      MaxRetentionSec = "14day";
+      MaxFileSec = "7day";
       Storage = "persistent";
       Compress = "yes";
       RateLimitBurst = 100;

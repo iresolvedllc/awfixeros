@@ -30,6 +30,7 @@
   # Keep the always-on system set lean. Heavy GUI apps stay as packages but
   # are not started as daemons — open only when needed (RAM is the constraint).
   # Toolchains live in programming.nix. Scanners and packet tools live in hacking.nix.
+  # Tor, Mullvad, and the privacy browsers live in privacy.nix (installed, not enabled).
   environment.systemPackages = with pkgs; [
     vesktop
     signal-desktop

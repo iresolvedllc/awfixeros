@@ -48,7 +48,7 @@ A pin stays where it is when a comment above it says `# update: skip`, when a fl
 
 ## System modules (`modules/`)
 
-`environment.nix` is boot, locale, network, and daily packages. `programming.nix` is language toolchains. `hacking.nix` is scanners and packet tools. Both package modules are imported, so those tools stay on the system.
+`environment.nix` is boot, locale, network, and daily packages. `programming.nix` is language toolchains. `hacking.nix` is scanners and packet tools. `privacy.nix` installs Tor Browser, Mullvad Browser, tor, torsocks, and Mullvad VPN with their daemons left off. `security.nix` is host hardening: AppArmor, auditd, USBGuard, fwupd, sudo, and kernel sysctls. The firewall drops inbound traffic and opens no ports. Those package modules are imported, so the tools stay on the system.
 
 Also imported: Mango, Flatpak, firewall, systemd tweaks, 1Password, Chromium, Nix LD, users, services, and sops-nix secrets.
 

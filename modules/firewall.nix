@@ -35,10 +35,12 @@
     # Do not answer pings
     allowPing = false;
 
-    # Expo / Metro (8081) and a local dev port (3000).
-    # mDNS, Spotify Connect, Tailscale, and Mullvad are not configured here.
-    allowedTCPPorts = [ 8081 3000 ];
+    # No inbound ports. A dev server on 127.0.0.1 still works.
+    # mDNS, Spotify Connect, and Tailscale are not configured here.
+    # Mullvad is installed in privacy.nix and opens no ports.
+    allowedTCPPorts = [ ];
     allowedUDPPorts = [ ];
+    logRefusedConnections = true;
     allowedTCPPortRanges = [ ];
     allowedUDPPortRanges = [ ];
 
